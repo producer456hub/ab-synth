@@ -55,6 +55,8 @@ void ab_set_constraint(int inst, int c, int on) { if (g) g->engine(inst).setCons
 int  ab_active_voices(int inst)            { return g ? g->engine(inst).activeVoices() : 0; }
 int  ab_latency(int inst)                  { return g ? g->engine(inst).latencySamples() : 0; }
 int  ab_max_voices(int inst)               { return g ? g->engine(inst).limits().maxVoices : 0; }
+int  ab_steals(int inst)                   { return g ? (int)g->engine(inst).steals() : 0; }
+void ab_reset_steals(int inst)             { if (g) g->engine(inst).resetSteals(); }
 
 int   ab_param_count()                     { return kNumParams; }
 const char* ab_param_name(int id)          { return (id >= 0 && id < kNumParams) ? paramInfo(id).name : ""; }

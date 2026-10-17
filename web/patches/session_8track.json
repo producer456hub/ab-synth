@@ -1,0 +1,23 @@
+{
+  "name": "8-track session, 6-note chords",
+  "description": "Eight engines at once, every track polyphonic with 6-note chords and overlapping releases (up to 48 notes sounding). B's 8-voice-per-track limit steals notes at each chord change; the summed cost projects the RK3288 load for a real multitrack arrangement.",
+  "bpm": 100,
+  "tail": 2.5,
+  "progression": [
+    [57, 60, 64, 67, 71, 74],
+    [53, 57, 60, 64, 67, 72],
+    [48, 55, 60, 64, 67, 74],
+    [55, 59, 62, 64, 67, 69]
+  ],
+  "beatsPerChord": 4,
+  "tracks": [
+    { "name": "Pad 1",     "patch": "supersaw_pad",   "transpose": 0,   "hold": 0.95, "offsetBeats": 0,    "gain": 0.30 },
+    { "name": "Pad 2 low", "patch": "supersaw_pad",   "transpose": -12, "hold": 0.95, "offsetBeats": 2,    "gain": 0.25, "params": { "unisonDetune": 20, "cutoff": 1800 } },
+    { "name": "Air high",  "patch": "ambient_tail",   "transpose": 12,  "hold": 0.90, "offsetBeats": 0,    "gain": 0.22 },
+    { "name": "Air mid",   "patch": "ambient_tail",   "transpose": 0,   "hold": 0.90, "offsetBeats": 1,    "gain": 0.22 },
+    { "name": "Stabs 1",   "patch": "snappy_pluck",   "transpose": 0,   "hold": 0.30, "offsetBeats": 0,    "gain": 0.30, "stabBeats": 1 },
+    { "name": "Stabs 2",   "patch": "snappy_pluck",   "transpose": 7,   "hold": 0.25, "offsetBeats": 0.25, "gain": 0.26, "stabBeats": 0.5 },
+    { "name": "Lead stack","patch": "screaming_lead", "transpose": 0,   "hold": 0.50, "offsetBeats": 0,    "gain": 0.22, "stabBeats": 2 },
+    { "name": "Poly bass", "patch": "control_bass",   "transpose": -7,  "hold": 0.60, "offsetBeats": 0,    "gain": 0.30, "stabBeats": 1, "params": { "mono": 0, "ampR": 0.25, "filR": 0.25, "cutoff": 600 } }
+  ]
+}

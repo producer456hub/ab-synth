@@ -70,6 +70,7 @@ public:
         int idx = -1;
         for (int i = 0; i < lim.maxVoices; ++i) if (!voices[i].active()) { idx = i; break; }
         if (idx < 0) {
+            ++stealCount;
             // oldest-note stealing: prefer released voices, else the oldest held
             uint32_t best = 0xFFFFFFFFu;
             for (int i = 0; i < lim.maxVoices; ++i) {
@@ -89,6 +90,8 @@ public:
     void panic() { for (auto& v : voices) v.kill(); chorus.reset(); delay.reset(); fdn.reset(); schroeder.reset(); }
 
     int activeVoices() const { int n = 0; for (const auto& v : voices) if (v.active()) ++n; return n; }
+    uint32_t steals() const { return stealCount; }          // notes cut by voice stealing since prepare()
+    void resetSteals() { stealCount = 0; }
 
     // ---- audio. out[0] = left, out[1] = right. n may exceed maxBlock (it is split).
     void process(float** out, int n) {
@@ -112,6 +115,7 @@ private:
     const float* curvePtr[kNumParams] = {};
     Voice voices[kMaxVoices];
     uint32_t ageCounter = 0;
+    uint32_t stealCount = 0;
     Chorus chorus;
     StereoDelay delay;
     FDNReverb fdn;

@@ -22,6 +22,8 @@ void   ab_set_constraint(int inst, int c, int on);
 int    ab_active_voices(int inst);
 int    ab_latency(int inst);
 int    ab_max_voices(int inst);
+int    ab_steals(int inst);
+void   ab_reset_steals(int inst);
 int    ab_param_count(void);
 const char* ab_param_name(int id);
 float  ab_param_min(int id);

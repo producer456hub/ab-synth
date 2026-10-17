@@ -67,7 +67,7 @@ function send(m) { if (state.node) state.node.port.postMessage(m); }
 
 // ---------------------------------------------------------------- patches + phrases
 async function loadPatches() {
-  for (const name of PATCHES) {
+  for (const name of PATCHES.concat(['session_8track'])) {
     const r = await fetch(`patches/${name}.json`, { cache: 'no-cache' });
     state.patches[name] = await r.json();
   }
@@ -106,6 +106,7 @@ function applyPatch(name) {
   $('#patchDesc').textContent = p.description || '';
   if (!state.node) return;
   stopPhrase();
+  if (state.session && state.session.playing) sessionStop();
   send({ type: 'panic' });
   // reset everything to defaults first, then the patch (a patch only lists what it changes)
   send({ type: 'params', list: state.paramDefaults.concat(paramList(p)) });
@@ -131,6 +132,7 @@ function stopPhrase() {
 function setMix(x, fromAbx) {
   state.mix = x;
   send({ type: 'mix', value: x });
+  if (state.session && state.session.playing) sessionApplyMix(x);
   const abx = state.abx;
   $('#btnA').classList.toggle('on', !abx && x === 0);
   $('#btnB').classList.toggle('on', !abx && x === 1);
@@ -229,8 +231,21 @@ function measureLoudness() {
 }
 
 function updateBudget() {
-  const r = state.lastMeasure; if (!r) return;
   const factor = state.factor;
+  if (state.session) {
+    const s = state.session;
+    const gen1 = s.loadB * factor / 3, pct = gen1 / 0.70 * 100;
+    const perTrack = s.loadB / s.tracks.length;
+    const fit = Math.floor(0.70 * 3 / (perTrack * factor));
+    $('#budgetBar').style.width = Math.min(100, pct) + '%';
+    $('#budgetBar').classList.toggle('over', pct > 100);
+    $('#budgetText').textContent =
+      `Session on this device: A ${(s.loadA * 100).toFixed(0)} % of a core, B ${(s.loadB * 100).toFixed(0)} %. ` +
+      `Gen1 projection ×${factor}: B needs ${pct.toFixed(0)} % of the 70 % budget on 3 cores → about ${fit} tracks like these fit. ` +
+      `A (Full) would need ${(s.loadA * factor / 3 / 0.70 * 100).toFixed(0)} %.`;
+    return;
+  }
+  const r = state.lastMeasure; if (!r) return;
   // fraction of ONE core this machine needs for B, projected onto the RK3288 and its 3 usable cores at 70 % target
   const hostLoadB = 1 / r.xrtB, hostLoadA = 1 / r.xrtA;
   const gen1Load = hostLoadB * factor / 3;
@@ -241,6 +256,118 @@ function updateBudget() {
     `This device: A ${r.xrtA.toFixed(0)}× realtime (${(hostLoadA * 100).toFixed(1)} % of a core), ` +
     `B ${r.xrtB.toFixed(0)}× (${(hostLoadB * 100).toFixed(1)} %). ` +
     `Gen1 projection ×${factor}: ${pct.toFixed(0)} % of the 70 % budget on 3 cores.`;
+}
+
+// ---------------------------------------------------------------- 8-track session (offline render, buffer A/B)
+// Event logic mirrors dsp/tests/session.cpp (trackEvents): keep both in sync.
+function sessionTrackEvents(session, t, sr) {
+  const spb = 60 / (session.bpm || 100), bpc = session.beatsPerChord || 4;
+  const ev = []; let lastOff = 0;
+  session.progression.forEach((chord, c) => {
+    const start = (t.offsetBeats || 0) + c * bpc;
+    const step = t.stabBeats > 0 ? t.stabBeats : bpc;
+    for (let s = 0; s < bpc - 1e-9; s += step) {
+      const t0 = (start + s) * spb, t1 = t0 + (t.hold == null ? 0.9 : t.hold) * step * spb;
+      for (const n of chord) {
+        const note = n + (t.transpose || 0);
+        ev.push({ t: Math.round(t0 * sr), note, vel: 0.8, on: true });
+        ev.push({ t: Math.round(t1 * sr), note, vel: 0.8, on: false });
+        lastOff = Math.max(lastOff, t1);
+      }
+    }
+  });
+  ev.sort((a, b) => a.t - b.t || (a.on === b.on ? 0 : a.on ? 1 : -1));
+  return { events: ev, lastOff };
+}
+
+async function renderSession() {
+  if (!state.ctx) return;
+  const q = $;
+  const session = state.patches.session_8track;
+  if (!session) { q('#sessionInfo').textContent = 'session file missing'; return; }
+  sessionStop();
+  const sr = state.ctx.sampleRate;
+  const tail = session.tail == null ? 2.5 : session.tail;
+  let lengthSec = 0;
+  const tracks = session.tracks.map((t) => { const r = sessionTrackEvents(session, t, sr); lengthSec = Math.max(lengthSec, r.lastOff + tail); return { t, events: r.events }; });
+  const total = Math.round(lengthSec * sr);
+  q('#sessionRender').disabled = true; q('#sessionPlay').disabled = true;
+  q('#sessionInfo').textContent = `rendering ${tracks.length} tracks × 2 profiles, ${lengthSec.toFixed(1)} s each…`;
+  q('#sessionProgress').style.width = '0%';
+  const results = new Array(tracks.length);
+  let done = 0;
+  const seq = ++state.measureSeq;
+  await Promise.all(tracks.map((tr, i) => new Promise((resolve) => {
+    const w = new Worker('session-worker.js');
+    const patch = state.patches[tr.t.patch] || { params: {} };
+    const params = state.paramDefaults.concat(paramList(patch));
+    for (const [k, v] of Object.entries(tr.t.params || {})) if (k in state.paramIds) params.push([state.paramIds[k], v]);
+    w.onmessage = (e) => { results[i] = e.data; w.terminate(); done++; q('#sessionProgress').style.width = (100 * done / tracks.length) + '%'; resolve(); };
+    w.postMessage({ id: seq, track: i, module: state.module, sampleRate: sr, params, constraints: state.constraints, events: tr.events, lengthSamples: total });
+  })));
+  if (seq !== state.measureSeq) return;
+  // sum with per-track gain, common normalization
+  const AL = new Float32Array(total), AR = new Float32Array(total), BL = new Float32Array(total), BR = new Float32Array(total);
+  results.forEach((r, i) => {
+    const g = tracks[i].t.gain == null ? 0.3 : tracks[i].t.gain;
+    for (let k = 0; k < total; k++) { AL[k] += r.AL[k] * g; AR[k] += r.AR[k] * g; BL[k] += r.BL[k] * g; BR[k] += r.BR[k] * g; }
+  });
+  let peak = 0, sA = 0, sB = 0;
+  for (let k = 0; k < total; k++) { peak = Math.max(peak, Math.abs(AL[k]), Math.abs(AR[k]), Math.abs(BL[k]), Math.abs(BR[k])); }
+  const norm = peak > 0.9 ? 0.9 / peak : 1;
+  for (let k = 0; k < total; k++) { AL[k] *= norm; AR[k] *= norm; BL[k] *= norm; BR[k] *= norm; sA += AL[k] * AL[k] + AR[k] * AR[k]; sB += BL[k] * BL[k] + BR[k] * BR[k]; }
+  const db = (x) => 20 * Math.log10(Math.max(x, 1e-9));
+  const rmsA = db(Math.sqrt(sA / (2 * total))), rmsB = db(Math.sqrt(sB / (2 * total)));
+  const bufA = state.ctx.createBuffer(2, total, sr), bufB = state.ctx.createBuffer(2, total, sr);
+  bufA.copyToChannel(AL, 0); bufA.copyToChannel(AR, 1); bufB.copyToChannel(BL, 0); bufB.copyToChannel(BR, 1);
+  const loadA = results.reduce((a, r) => a + r.timeA / r.seconds, 0), loadB = results.reduce((a, r) => a + r.timeB / r.seconds, 0);
+  state.session = { bufA, bufB, rmsA, rmsB, loadA, loadB, results, tracks, playing: false, nodes: null, lengthSec };
+  const rows = results.map((r, i) => `${(tracks[i].t.name || tracks[i].t.patch).padEnd(11)} A ${(100 * r.timeA / r.seconds).toFixed(1).padStart(5)} %  B ${(100 * r.timeB / r.seconds).toFixed(1).padStart(5)} %  voices ${String(r.peakVA).padStart(2)}/${String(r.peakVB).padStart(2)}  B stole ${r.stealsB}`);
+  q('#sessionTable').textContent = rows.join('\n') + `\n${'TOTAL'.padEnd(11)} A ${(100 * loadA).toFixed(1).padStart(5)} %  B ${(100 * loadB).toFixed(1).padStart(5)} %  of one core on this device`;
+  q('#sessionInfo').textContent = `Rendered ${lengthSec.toFixed(1)} s. RMS A ${rmsA.toFixed(1)} / B ${rmsB.toFixed(1)} dBFS. Press Play session, then A / B / Blind X as usual.`;
+  q('#sessionRender').disabled = false; q('#sessionPlay').disabled = false; q('#sessionExit').disabled = false;
+  updateBudget();
+}
+
+function sessionApplyMix(x) {
+  const s = state.session; if (!s || !s.nodes) return;
+  const t = state.ctx.currentTime, tc = 0.004;    // ~10 ms settle
+  const trimB = state.matchEnabled ? Math.pow(10, Math.max(-12, Math.min(12, s.rmsA - s.rmsB)) / 20) : 1;
+  s.nodes.gA.gain.setTargetAtTime(Math.cos(x * Math.PI / 2), t, tc);
+  s.nodes.gB.gain.setTargetAtTime(Math.sin(x * Math.PI / 2) * trimB, t, tc);
+}
+
+function sessionPlay() {
+  const s = state.session; if (!s) return;
+  sessionStop(false);
+  stopPhrase(); send({ type: 'panic' });
+  const ctx = state.ctx;
+  const srcA = ctx.createBufferSource(), srcB = ctx.createBufferSource();
+  srcA.buffer = s.bufA; srcB.buffer = s.bufB; srcA.loop = srcB.loop = true;
+  const gA = ctx.createGain(), gB = ctx.createGain();
+  srcA.connect(gA).connect(state.gain); srcB.connect(gB).connect(state.gain);
+  const t0 = ctx.currentTime + 0.05;
+  srcA.start(t0); srcB.start(t0);
+  s.nodes = { srcA, srcB, gA, gB }; s.playing = true;
+  gA.gain.value = 1; gB.gain.value = 0;
+  sessionApplyMix(state.mix);
+  $('#sessionPlay').textContent = '■ Stop session';
+  $('#voices').textContent = 'session: 8 tracks (pre-rendered)';
+}
+
+function sessionStop(resetLabel = true) {
+  const s = state.session; if (!s || !s.nodes) { if (resetLabel) $('#sessionPlay').textContent = '▶ Play session'; return; }
+  try { s.nodes.srcA.stop(); s.nodes.srcB.stop(); } catch (e) {}
+  s.nodes = null; s.playing = false;
+  if (resetLabel) $('#sessionPlay').textContent = '▶ Play session';
+}
+
+function sessionExit() {
+  sessionStop();
+  state.session = null;
+  $('#sessionPlay').disabled = true; $('#sessionExit').disabled = true;
+  $('#sessionTable').textContent = '';
+  applyPatch(state.patch);
 }
 
 // ---------------------------------------------------------------- status from the worklet
@@ -330,7 +457,10 @@ function wire() {
   $('#factor').onchange = (e) => { state.factor = Math.max(1, parseFloat(e.target.value) || 20); updateBudget(); };
   $('#octDown').onclick = () => { state.octave = Math.max(1, state.octave - 1); buildKeyboard(); };
   $('#octUp').onclick = () => { state.octave = Math.min(7, state.octave + 1); buildKeyboard(); };
-  $('#panic').onclick = () => { send({ type: 'panic' }); stopPhrase(); };
+  $('#panic').onclick = () => { send({ type: 'panic' }); stopPhrase(); sessionStop(); };
+  $('#sessionRender').onclick = renderSession;
+  $('#sessionPlay').onclick = () => (state.session && state.session.playing ? sessionStop() : sessionPlay());
+  $('#sessionExit').onclick = sessionExit;
   buildKeyboard();
 }
 

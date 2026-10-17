@@ -47,6 +47,19 @@ Deployed from the `web/` folder via GitHub Pages.
 | Reverb | 16-line modulated FDN | Schroeder / Freeverb-lite (4 comb + 2 allpass) |
 | Delay interpolation | cubic | linear |
 
+## 8-track session stress test
+
+`patches/session_8track.json` defines eight tracks (two supersaw pads, two ambient layers, two pluck
+stab tracks, a lead stack, a poly bass), every one playing 6-note chords with overlapping releases, up to
+48 notes sounding. Native: `absynth_session patches renders session_8track [factor]` renders the summed
+session through both profiles (`renders/session_8track_{A_full,B_gen1,diff}.wav`) and prints per-track
+cost, peak voices, steals and the RK3288 projection. Web: **Render session A + B** renders the same thing
+in parallel workers and A/Bs the two mixes by crossfading buffers (16 live engines would not fit in one
+audio thread), so Blind X works on the whole arrangement.
+
+First native numbers (this laptop, one core, factor 20): A needs 214 % of a core, B 20 %; B steals
+364 notes in 13 s; projected Gen1 load is 194 % of the 70 % budget on 3 cores, so about 4 such tracks fit.
+
 ## Measured so far (native, 48 kHz)
 
 Unit tests (`absynth_tests`): 4-point polyBLEP alias floor −37.6 dB (naive saw −13.1 dB); ladder stable at

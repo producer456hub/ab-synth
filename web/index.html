@@ -64,6 +64,15 @@
       <label class="chk"><input type="checkbox" id="match" checked><span>auto-match B to A (RMS over the phrase)</span></label>
       <div id="trimInfo" class="small">B trim +0.0 dB</div>
       <div id="levels" class="small"></div>
+      <h3>8-track session (6-note chords)</h3>
+      <div class="row">
+        <button id="sessionRender">Render session A + B</button>
+        <button id="sessionPlay" disabled>▶ Play session</button>
+        <button id="sessionExit" disabled class="ghost">back to single patch</button>
+      </div>
+      <div class="bar"><div id="sessionProgress"></div></div>
+      <div id="sessionInfo" class="small">Eight engines at once, every track polyphonic with 6-note chords. Rendered offline on this device, then A/B'd by crossfading the two mixes (16 live engines would not fit in one audio thread).</div>
+      <pre id="sessionTable" class="small"></pre>
       <h3>Gen1 budget</h3>
       <div class="bar budget"><div id="budgetBar"></div></div>
       <div id="budgetText" class="small">Play a patch to measure. Projection = this device's cost × factor.</div>
