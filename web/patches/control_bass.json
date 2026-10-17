@@ -1,0 +1,25 @@
+{
+  "name": "Control bass",
+  "description": "Mono staccato saw into the ladder, no glide, no drive, no FX. Exercises none of the Gen1 constraints, so A and B should null; if they do not, there is a bug.",
+  "params": {
+    "osc1Wave": 0, "osc1Level": 1, "osc2Level": 0,
+    "unisonVoices": 1,
+    "cutoff": 420, "resonance": 0.3, "filterEnvAmt": 30, "filterKeyTrack": 0.2, "filterInputGain": 1,
+    "drive": 0, "driveMix": 0,
+    "ampA": 0.004, "ampD": 0.3, "ampS": 0.8, "ampR": 0.02,
+    "filA": 0.004, "filD": 0.22, "filS": 0.1, "filR": 0.02,
+    "mono": 1, "glide": 0,
+    "chorusMix": 0, "delayMix": 0, "reverbMix": 0,
+    "masterGain": 0.8
+  },
+  "bpm": 112,
+  "repeat": 4,
+  "loopBeats": 8,
+  "tail": 1.0,
+  "phrase": [
+    [0.0, 0.3, 28, 110], [0.5, 0.3, 28, 90], [1.0, 0.3, 40, 100], [1.5, 0.3, 28, 90],
+    [2.0, 0.3, 31, 105], [2.5, 0.3, 28, 90], [3.0, 0.3, 33, 100], [3.5, 0.3, 35, 95],
+    [4.0, 0.3, 28, 110], [4.5, 0.3, 28, 90], [5.0, 0.3, 40, 100], [5.5, 0.3, 28, 90],
+    [6.0, 0.8, 26, 105], [7.0, 0.3, 31, 100], [7.5, 0.3, 30, 95]
+  ]
+}

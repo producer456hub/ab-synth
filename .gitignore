@@ -1,0 +1,6 @@
+build/
+renders/*.wav
+renders/*.png
+*.obj
+*.exe
+.vs/

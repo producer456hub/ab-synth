@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>AB Synth</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="overlay">
+    <div class="card">
+      <h1>AB Synth</h1>
+      <p>One engine, two budgets. <b>A</b> runs at an iPad M5 budget, <b>B</b> the way an RK3288 MPC Key 37 Gen 1 would force it. Switch instantly, or test yourself blind.</p>
+      <button id="start" disabled>loading…</button>
+      <p class="small">Needs HTTPS and a tap to start audio (Safari). Turn the silent switch off.</p>
+    </div>
+  </div>
+
+  <header>
+    <div class="title">AB Synth <span id="srInfo" class="small"></span></div>
+    <div id="patches" class="seg"></div>
+    <div class="transport">
+      <button id="play">▶ Play phrase</button>
+      <label class="chk"><input type="checkbox" id="loop" checked><span>loop</span></label>
+      <button id="panic" class="ghost">panic</button>
+      <label class="vol">vol <input type="range" id="volume" min="0" max="1" step="0.01" value="0.7"></label>
+    </div>
+  </header>
+  <div id="patchDesc" class="small desc"></div>
+  <div class="bars">
+    <div class="bar"><div id="playhead"></div></div>
+    <div class="bar meter"><div id="meter"></div></div>
+  </div>
+
+  <main>
+    <section class="ab">
+      <div class="abbtns">
+        <button id="btnA" class="big on">A<span>Full · M5</span></button>
+        <button id="btnX" class="big" disabled>X<span>blind</span></button>
+        <button id="btnB" class="big">B<span>Gen1 · RK3288</span></button>
+      </div>
+      <div id="voices" class="small">voices A 0/32 · B 0/8</div>
+      <div id="abxPanel" class="abx">
+        <div class="row">
+          <button id="abxStart">Blind X test (10 trials)</button>
+          <button id="abxAnswerA" disabled>X is A</button>
+          <button id="abxAnswerB" disabled>X is B</button>
+        </div>
+        <div id="abxStatus" class="small">Press Blind X: the app hides whether X is A or B, you decide, it scores after 10 trials.</div>
+        <pre id="abxLog" class="small"></pre>
+      </div>
+    </section>
+
+    <section class="side">
+      <h3>Gen1 constraints (B only)</h3>
+      <div id="constraints" class="toggles"></div>
+      <div class="row">
+        <button id="allOn" class="ghost">all on</button>
+        <button id="allOff" class="ghost">all off (B = A)</button>
+      </div>
+      <h3>Loudness</h3>
+      <label class="chk"><input type="checkbox" id="match" checked><span>auto-match B to A (RMS over the phrase)</span></label>
+      <div id="trimInfo" class="small">B trim +0.0 dB</div>
+      <div id="levels" class="small"></div>
+      <h3>Gen1 budget</h3>
+      <div class="bar budget"><div id="budgetBar"></div></div>
+      <div id="budgetText" class="small">Play a patch to measure. Projection = this device's cost × factor.</div>
+      <label class="small">factor <input type="number" id="factor" value="20" min="1" max="200" step="1"></label>
+    </section>
+  </main>
+
+  <footer>
+    <div class="octs"><button id="octDown">oct −</button><button id="octUp">oct +</button></div>
+    <div id="keys" class="keys"></div>
+  </footer>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

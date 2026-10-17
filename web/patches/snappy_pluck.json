@@ -1,0 +1,25 @@
+{
+  "name": "Snappy pluck",
+  "description": "1 ms attack with a fast filter envelope. Tests block-rate (32-sample) modulation against per-sample.",
+  "params": {
+    "osc1Wave": 0, "osc1Level": 1, "osc2Wave": 1, "osc2Level": 0.35, "osc2Semi": -12,
+    "unisonVoices": 1,
+    "cutoff": 320, "resonance": 0.45, "filterEnvAmt": 66, "filterKeyTrack": 0.4, "filterInputGain": 1.2,
+    "drive": 0, "driveMix": 0,
+    "ampA": 0.001, "ampD": 0.28, "ampS": 0, "ampR": 0.12,
+    "filA": 0.001, "filD": 0.07, "filS": 0, "filR": 0.08,
+    "chorusMix": 0, "delayMix": 0.15, "delayTime": 0.24, "delayFeedback": 0.3,
+    "reverbMix": 0.1, "reverbSize": 0.45,
+    "masterGain": 0.7
+  },
+  "bpm": 124,
+  "repeat": 4,
+  "loopBeats": 4,
+  "tail": 1.5,
+  "phrase": [
+    [0.00, 0.12, 60, 120], [0.25, 0.12, 64, 100], [0.50, 0.12, 67, 110], [0.75, 0.12, 72, 100],
+    [1.00, 0.12, 67, 115], [1.25, 0.12, 64, 100], [1.50, 0.12, 60, 110], [1.75, 0.12, 55, 100],
+    [2.00, 0.12, 57, 120], [2.25, 0.12, 60, 100], [2.50, 0.12, 64, 110], [2.75, 0.12, 69, 100],
+    [3.00, 0.12, 64, 115], [3.25, 0.12, 60, 100], [3.50, 0.12, 57, 110], [3.75, 0.12, 52, 100]
+  ]
+}

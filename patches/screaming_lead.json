@@ -1,0 +1,29 @@
+{
+  "name": "Screaming lead",
+  "description": "High resonance plus heavy drive, played high. Tests aliasing (4x vs 1x oversampling).",
+  "params": {
+    "osc1Wave": 0, "osc1Level": 1, "osc2Wave": 1, "osc2Level": 0.5, "osc2Semi": 0, "osc2Fine": 9,
+    "unisonVoices": 2, "unisonDetune": 10, "unisonSpread": 0.3,
+    "cutoff": 1400, "resonance": 0.85, "filterEnvAmt": 40, "filterKeyTrack": 0.5, "filterInputGain": 2.5,
+    "drive": 0.85, "driveMix": 1,
+    "ampA": 0.003, "ampD": 0.3, "ampS": 0.7, "ampR": 0.2,
+    "filA": 0.003, "filD": 0.35, "filS": 0.35, "filR": 0.2,
+    "lfo1Rate": 6, "lfo1Shape": 0, "lfo1ToPitch": 0.25,
+    "chorusMix": 0, "delayMix": 0.22, "delayTime": 0.23, "delayFeedback": 0.35, "delayWobble": 0.4,
+    "reverbMix": 0.08, "reverbSize": 0.4,
+    "masterGain": 0.45
+  },
+  "bpm": 128,
+  "repeat": 2,
+  "loopBeats": 8,
+  "tail": 2,
+  "phrase": [
+    [0.00, 0.22, 84, 120], [0.25, 0.22, 86, 110], [0.50, 0.22, 88, 115], [0.75, 0.22, 91, 110],
+    [1.00, 0.22, 93, 120], [1.25, 0.22, 91, 110], [1.50, 0.22, 88, 115], [1.75, 0.22, 86, 110],
+    [2.00, 0.22, 84, 120], [2.25, 0.22, 88, 110], [2.50, 0.22, 91, 115], [2.75, 0.22, 96, 125],
+    [3.00, 0.95, 98, 127],
+    [4.00, 0.22, 96, 120], [4.25, 0.22, 95, 110], [4.50, 0.22, 93, 115], [4.75, 0.22, 91, 110],
+    [5.00, 0.22, 89, 120], [5.25, 0.22, 88, 110], [5.50, 0.22, 86, 115], [5.75, 0.22, 84, 110],
+    [6.00, 1.90, 100, 127]
+  ]
+}

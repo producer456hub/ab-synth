@@ -1,0 +1,22 @@
+{
+  "name": "Ambient tail",
+  "description": "Long reverb on sparse notes. Tests the 16-line modulated FDN against the Schroeder/Freeverb-lite reverb.",
+  "params": {
+    "osc1Wave": 3, "osc1Level": 0.9, "osc2Wave": 2, "osc2Level": 0.5, "osc2Semi": 12, "osc2Fine": 4,
+    "unisonVoices": 2, "unisonDetune": 6, "unisonSpread": 0.6,
+    "cutoff": 4500, "resonance": 0.05, "filterEnvAmt": 0,
+    "drive": 0, "driveMix": 0,
+    "ampA": 0.6, "ampD": 1.0, "ampS": 0.7, "ampR": 2.0,
+    "lfo1Rate": 4.5, "lfo1ToPitch": 0.08,
+    "chorusMix": 0.15, "chorusRate": 0.2,
+    "delayMix": 0.25, "delayTime": 0.5, "delayFeedback": 0.45, "delayWobble": 0.3,
+    "reverbMix": 0.6, "reverbSize": 1.0, "reverbDamp": 0.3,
+    "masterGain": 0.6
+  },
+  "bpm": 60,
+  "tail": 7,
+  "phrase": [
+    [0, 1.5, 60, 95], [2, 1.5, 67, 90], [4, 1.5, 71, 90], [6, 1.5, 74, 95],
+    [8, 1.5, 72, 90], [10, 1.5, 65, 90], [12, 2.5, 62, 95], [12, 2.5, 69, 85]
+  ]
+}

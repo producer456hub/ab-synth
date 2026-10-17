@@ -1,0 +1,66 @@
+:root {
+  --bg: #0f1115; --panel: #181b22; --panel2: #20242e; --text: #e8eaf0; --muted: #8b93a7;
+  --a: #4ea1ff; --b: #ff8a4e; --x: #b47cff; --ok: #4ecf8a; --bad: #ff5c5c; --line: #2b3040;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font: 15px/1.35 -apple-system, system-ui, Segoe UI, Roboto, sans-serif; overscroll-behavior: none; }
+body { display: flex; flex-direction: column; padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); user-select: none; -webkit-user-select: none; }
+button { font: inherit; color: var(--text); background: var(--panel2); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; cursor: pointer; }
+button:disabled { opacity: .4; }
+button.on { background: var(--a); color: #06111f; border-color: transparent; }
+button.ghost { background: transparent; }
+.small { font-size: 12px; color: var(--muted); }
+h3 { margin: 14px 0 6px; font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+
+#overlay { position: fixed; inset: 0; background: rgba(8,10,14,.96); display: flex; align-items: center; justify-content: center; z-index: 10; }
+#overlay.hidden { display: none; }
+#overlay .card { max-width: 520px; padding: 28px; background: var(--panel); border-radius: 18px; text-align: center; }
+#overlay h1 { margin: 0 0 10px; }
+#overlay #start { font-size: 20px; padding: 16px 28px; background: var(--a); color: #06111f; border: none; }
+
+header { display: flex; gap: 14px; align-items: center; padding: 10px 14px 4px; flex-wrap: wrap; }
+header .title { font-weight: 700; font-size: 18px; }
+.seg { display: flex; gap: 6px; flex-wrap: wrap; }
+.seg button { padding: 8px 12px; }
+.transport { display: flex; gap: 10px; align-items: center; margin-left: auto; }
+.vol input { width: 110px; vertical-align: middle; }
+.chk { display: inline-flex; align-items: center; gap: 6px; }
+.chk input { width: 20px; height: 20px; }
+.desc { padding: 0 14px 6px; }
+.bars { display: flex; gap: 10px; padding: 0 14px 6px; }
+.bar { flex: 1; height: 6px; background: var(--panel2); border-radius: 3px; overflow: hidden; }
+.bar > div { height: 100%; width: 0; background: var(--a); transition: width .05s linear; }
+.bar.meter > div { background: var(--ok); }
+.bar.budget { height: 14px; margin: 6px 0; }
+.bar.budget > div { background: var(--ok); transition: width .3s; }
+.bar.budget > div.over { background: var(--bad); }
+
+main { flex: 1; display: grid; grid-template-columns: 1.4fr 1fr; gap: 12px; padding: 0 14px; min-height: 0; }
+section { background: var(--panel); border-radius: 14px; padding: 12px 14px; overflow: auto; }
+.abbtns { display: grid; grid-template-columns: 1fr .7fr 1fr; gap: 12px; }
+button.big { font-size: 56px; font-weight: 800; padding: 22px 0 16px; border-radius: 18px; display: flex; flex-direction: column; align-items: center; line-height: 1; }
+button.big span { font-size: 13px; font-weight: 500; margin-top: 8px; opacity: .85; }
+#btnA.on { background: var(--a); color: #06111f; }
+#btnB.on { background: var(--b); color: #1f0d04; }
+#btnX.on { background: var(--x); color: #140826; }
+.abx { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--line); }
+.row { display: flex; gap: 8px; flex-wrap: wrap; margin: 6px 0; }
+#abxLog { white-space: pre-wrap; margin: 6px 0 0; }
+
+.toggles { display: grid; gap: 6px; }
+.toggles label { display: flex; align-items: center; gap: 10px; padding: 8px 10px; background: var(--panel2); border-radius: 10px; }
+.toggles input { width: 22px; height: 22px; accent-color: var(--b); }
+#factor { width: 64px; font: inherit; padding: 4px 6px; border-radius: 6px; border: 1px solid var(--line); background: var(--panel2); color: var(--text); }
+
+footer { padding: 8px 14px 10px; display: flex; gap: 10px; align-items: stretch; }
+.octs { display: flex; flex-direction: column; gap: 6px; }
+.octs button { padding: 6px 10px; flex: 1; }
+.keys { flex: 1; position: relative; display: flex; height: 120px; }
+.key { flex: 1; background: #f3f4f7; border: 1px solid #aab; border-radius: 0 0 6px 6px; color: #667; font-size: 11px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 4px; }
+.key.black { flex: .7; background: #1b1d24; border-color: #000; color: #889; }
+.key.down, .key.black.down { background: var(--a); color: #06111f; }
+
+@media (max-width: 900px) {
+  main { grid-template-columns: 1fr; }
+  button.big { font-size: 40px; }
+}
