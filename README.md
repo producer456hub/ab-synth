@@ -47,6 +47,20 @@ Deployed from the `web/` folder via GitHub Pages.
 | Reverb | 16-line modulated FDN | Schroeder / Freeverb-lite (4 comb + 2 allpass) |
 | Delay interpolation | cubic | linear |
 
+## Gen1 Studio (`web/studio.html`)
+
+A small "OS" for actually writing a track under the Gen 1 ceiling: 8 synth tracks (wasm `Session`,
+one Engine per track, all on the Gen1 profile), a sample-accurate step sequencer with per-track looping
+patterns (1-8 bars, polymeter allowed), live record from the on-screen keyboard quantized to 1/16, a
+metronome, a mixer (gain/pan/mute/solo/master), a full parameter editor per track with presets, autosave
+in the browser, JSON save/load and loop export to WAV.
+
+The **RK3288 budget simulator** calibrates every track offline (cost = fixed + per-voice, measured with the
+export worker after a JIT warm-up), estimates the load every audio block from the live voice counts, scales it
+by the factor (default 20) onto 3 cores at a 70 % target, and when that goes over 100 % it drops output blocks
+at the rate the hardware would miss its deadlines. `engine: Full (reference)` switches all tracks to the Full
+profile so you can hear what the budget costs; expect the meter to go red and the audio to break up.
+
 ## 8-track session stress test
 
 `patches/session_8track.json` defines eight tracks (two supersaw pads, two ambient layers, two pluck

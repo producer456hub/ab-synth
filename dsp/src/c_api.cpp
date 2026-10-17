@@ -1,6 +1,7 @@
 // c_api.cpp - flat C ABI over Dual, used by the WebAssembly build (and linkable natively).
 // One Dual per wasm instance; the AudioWorklet and the offline worker each get their own.
 #include "absynth/Dual.h"
+#include "absynth/Session.h"
 #include "absynth/c_api.h"
 
 using namespace absynth;
@@ -57,6 +58,37 @@ int  ab_latency(int inst)                  { return g ? g->engine(inst).latencyS
 int  ab_max_voices(int inst)               { return g ? g->engine(inst).limits().maxVoices : 0; }
 int  ab_steals(int inst)                   { return g ? (int)g->engine(inst).steals() : 0; }
 void ab_reset_steals(int inst)             { if (g) g->engine(inst).resetSteals(); }
+
+// ---------------------------------------------------------------- multitrack session ("Gen1 OS")
+namespace { Session* gs = nullptr; }
+
+int ab_session_init(float sampleRate, int maxBlock, int nTracks) {
+    delete gs;
+    gs = new Session();
+    gs->prepare(sampleRate, maxBlock, nTracks);
+    if (!outBuf[0] || outCap < maxBlock) {
+        delete[] outBuf[0]; delete[] outBuf[1];
+        outCap = std::max(maxBlock, 128);
+        outBuf[0] = new float[(size_t)outCap]();
+        outBuf[1] = new float[(size_t)outCap]();
+    }
+    return gs->trackCount();
+}
+void  ab_session_process(int n)                       { if (gs) gs->process(outBuf[0], outBuf[1], std::min(n, outCap)); }
+void  ab_session_set_param(int t, int id, float v)    { if (gs) gs->track(t).setParam(id, v); }
+void  ab_session_note_on(int t, int note, float vel)  { if (gs) gs->track(t).noteOn(note, vel); }
+void  ab_session_note_off(int t, int note)            { if (gs) gs->track(t).noteOff(note); }
+void  ab_session_all_off(int t)                       { if (gs) gs->track(t).allNotesOff(); }
+void  ab_session_panic()                              { if (gs) gs->panic(); }
+void  ab_session_set_profile(int t, int profile)      { if (gs) gs->track(t).setProfile(profile ? Profile::Gen1 : Profile::Full); }
+void  ab_session_set_constraint(int t, int c, int on) { if (gs) gs->track(t).setConstraint(c, on != 0); }
+void  ab_session_mix(int t, float g, float pan, int mute, int solo) { if (gs) gs->setMix(t, g, pan, mute != 0, solo != 0); }
+void  ab_session_master(float g)                      { if (gs) gs->setMaster(g); }
+int   ab_session_voices(int t)                        { return gs ? gs->track(t).activeVoices() : 0; }
+int   ab_session_max_voices(int t)                    { return gs ? gs->track(t).limits().maxVoices : 0; }
+int   ab_session_steals(int t)                        { return gs ? (int)gs->track(t).steals() : 0; }
+void  ab_session_reset_steals(int t)                  { if (gs) gs->track(t).resetSteals(); }
+float ab_session_peak(int t)                          { return gs ? gs->trackPeak(t) : 0.0f; }
 
 int   ab_param_count()                     { return kNumParams; }
 const char* ab_param_name(int id)          { return (id >= 0 && id < kNumParams) ? paramInfo(id).name : ""; }

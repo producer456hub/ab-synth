@@ -24,6 +24,24 @@ int    ab_latency(int inst);
 int    ab_max_voices(int inst);
 int    ab_steals(int inst);
 void   ab_reset_steals(int inst);
+// multitrack session ("Gen1 OS")
+int    ab_session_init(float sampleRate, int maxBlock, int nTracks);
+void   ab_session_process(int n);
+void   ab_session_set_param(int t, int id, float v);
+void   ab_session_note_on(int t, int note, float vel);
+void   ab_session_note_off(int t, int note);
+void   ab_session_all_off(int t);
+void   ab_session_panic(void);
+void   ab_session_set_profile(int t, int profile);
+void   ab_session_set_constraint(int t, int c, int on);
+void   ab_session_mix(int t, float g, float pan, int mute, int solo);
+void   ab_session_master(float g);
+int    ab_session_voices(int t);
+int    ab_session_max_voices(int t);
+int    ab_session_steals(int t);
+void   ab_session_reset_steals(int t);
+float  ab_session_peak(int t);
+
 int    ab_param_count(void);
 const char* ab_param_name(int id);
 float  ab_param_min(int id);

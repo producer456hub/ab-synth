@@ -1,6 +1,8 @@
 // offline-worker.js - renders a patch + phrase through both engines OFF the audio thread.
 // Used for loudness matching (RMS of A vs B -> trim) and as the Phase 2 benchmark harness
 // (per-instance render time, never measured inside the AudioWorklet).
+// Each profile gets its own wasm instance and is timed as ONE whole render: worker clocks are
+// coarsened to ~100 us, so per-block timing would be meaningless.
 
 function instantiate(module) {
   const stubs = {};
@@ -13,9 +15,7 @@ function instantiate(module) {
   return inst;
 }
 
-self.onmessage = (e) => {
-  const { id, module, sampleRate, params, constraints, events, lengthSamples, maxSeconds } = e.data;
-  const t0 = performance.now();
+function renderOne(module, inst, sampleRate, params, constraints, events, total) {
   const ex = instantiate(module).exports;
   const block = 256;
   ex.ab_init(sampleRate, block);
@@ -23,11 +23,12 @@ self.onmessage = (e) => {
   const outR = new Float32Array(ex.memory.buffer, ex.ab_out_ptr(1), block);
   for (const [pid, v] of params) ex.ab_set_param(pid, v);
   for (let c = 0; c < constraints.length; c++) ex.ab_set_constraint(1, c, constraints[c] ? 1 : 0);
-
-  const total = Math.min(lengthSamples, Math.floor(maxSeconds * sampleRate));
-  let pos = 0, ev = 0;
-  let sumA = 0, sumB = 0, peakA = 0, peakB = 0;
-  let timeA = 0, timeB = 0;
+  // warm-up so the JIT has tiered up before the timed render (first run would read slow)
+  for (let i = 0; i < 8; i++) ex.ab_note_on(48 + i * 3, 0.8);
+  for (let k = 0; k < sampleRate; k += block) ex.ab_process_single(inst, block);
+  ex.ab_panic(); ex.ab_reset_steals(inst);
+  let pos = 0, ev = 0, sum = 0, peak = 0;
+  const t0 = performance.now();
   while (pos < total) {
     let next = Math.min(total, pos + block);
     while (ev < events.length) {
@@ -36,26 +37,28 @@ self.onmessage = (e) => {
       else { next = Math.min(next, x.t); break; }
     }
     const k = next - pos;
-    let ta = performance.now();
-    ex.ab_process_single(0, k);
-    timeA += performance.now() - ta;
-    for (let i = 0; i < k; i++) { const l = outL[i], r = outR[i]; sumA += l * l + r * r; const p = Math.max(Math.abs(l), Math.abs(r)); if (p > peakA) peakA = p; }
-    ta = performance.now();
-    ex.ab_process_single(1, k);
-    timeB += performance.now() - ta;
-    for (let i = 0; i < k; i++) { const l = outL[i], r = outR[i]; sumB += l * l + r * r; const p = Math.max(Math.abs(l), Math.abs(r)); if (p > peakB) peakB = p; }
+    ex.ab_process_single(inst, k);
+    for (let i = 0; i < k; i++) { const l = outL[i], r = outR[i]; sum += l * l + r * r; const p = Math.max(Math.abs(l), Math.abs(r)); if (p > peak) peak = p; }
     pos = next;
   }
-  const rmsA = Math.sqrt(sumA / Math.max(1, 2 * total));
-  const rmsB = Math.sqrt(sumB / Math.max(1, 2 * total));
+  const time = (performance.now() - t0) / 1000;
+  return { rms: Math.sqrt(sum / Math.max(1, 2 * total)), peak, time };
+}
+
+self.onmessage = (e) => {
+  const { id, module, sampleRate, params, constraints, events, lengthSamples, maxSeconds } = e.data;
+  const t0 = performance.now();
+  const total = Math.min(lengthSamples, Math.floor(maxSeconds * sampleRate));
+  const a = renderOne(module, 0, sampleRate, params, constraints, events, total);
+  const b = renderOne(module, 1, sampleRate, params, constraints, events, total);
   const db = (x) => 20 * Math.log10(Math.max(x, 1e-9));
   const seconds = total / sampleRate;
   self.postMessage({
     id,
-    rmsA: db(rmsA), rmsB: db(rmsB), peakA: db(peakA), peakB: db(peakB),
-    trimB: db(rmsA) - db(rmsB),
-    seconds, timeA: timeA / 1000, timeB: timeB / 1000,
-    xrtA: seconds / (timeA / 1000), xrtB: seconds / (timeB / 1000),
+    rmsA: db(a.rms), rmsB: db(b.rms), peakA: db(a.peak), peakB: db(b.peak),
+    trimB: db(a.rms) - db(b.rms),
+    seconds, timeA: a.time, timeB: b.time,
+    xrtA: seconds / Math.max(a.time, 1e-6), xrtB: seconds / Math.max(b.time, 1e-6),
     totalMs: performance.now() - t0,
   });
 };

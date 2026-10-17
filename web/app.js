@@ -394,7 +394,7 @@ function buildKeyboard() {
     const black = [1, 3, 6, 8, 10].includes(i % 12);
     k.className = 'key' + (black ? ' black' : '');
     k.dataset.note = n;
-    if (!black && i % 12 === 0) k.textContent = 'C' + (state.octave - 1);
+    if (!black && i % 12 === 0) k.textContent = 'C' + (state.octave - 1 + i / 12);
     kb.appendChild(k);
   }
   const down = (ev) => {

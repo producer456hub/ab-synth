@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Gen1 Studio</title>
+  <link rel="stylesheet" href="studio.css">
+</head>
+<body>
+  <div id="overlay">
+    <div class="card">
+      <h1>Gen1 Studio</h1>
+      <p>Eight synth tracks running the <b>Gen1</b> profile, a step sequencer, a mixer, and the RK3288 budget enforced the way the hardware would: when the projected load goes over, blocks get dropped. Write something and see what you think.</p>
+      <button id="start" disabled>loading…</button>
+      <p class="small">Landscape, headphones, silent switch off. Your project autosaves in this browser.</p>
+    </div>
+  </div>
+
+  <header>
+    <div class="transport">
+      <button id="play" class="big">▶</button>
+      <button id="stop" class="big">■</button>
+      <button id="rec" class="big rec">●</button>
+      <div class="bpm"><button id="bpmDown">−</button><span id="bpm">120</span><button id="bpmUp">+</button><span class="small">bpm</span></div>
+      <label class="chk"><input type="checkbox" id="metro"><span>click</span></label>
+      <div id="position" class="pos">1.1</div>
+    </div>
+    <div class="budget">
+      <div class="small"><span id="loadText">Gen1 CPU —</span> · <span id="dropText">0 dropouts</span></div>
+      <div class="bar"><div id="loadBar"></div></div>
+      <label class="chk small"><input type="checkbox" id="simulate" checked><span>simulate overrun</span></label>
+      <label class="small">×<input type="number" id="factor" value="20" min="1" max="200"></label>
+      <select id="profileAll"><option value="1">engine: Gen1</option><option value="0">engine: Full (reference)</option></select>
+    </div>
+    <div class="files">
+      <button id="new" class="ghost">new</button>
+      <button id="save" class="ghost">save .json</button>
+      <button id="load" class="ghost">load</button>
+      <input type="file" id="loadFile" accept="application/json" hidden>
+      <button id="exportWav" class="ghost">export .wav</button>
+      <a id="demoLink" class="ghost small" href="index.html">A/B demo</a>
+    </div>
+  </header>
+
+  <main>
+    <aside id="tracks"></aside>
+    <section id="editor">
+      <div class="rollbar">
+        <span id="trackTitle">Track 1</span>
+        <div class="seg" id="lenSeg">
+          <button data-len="1">1/16</button><button data-len="2" class="on">1/8</button><button data-len="4">1/4</button><button data-len="8">1/2</button><button data-len="16">bar</button>
+        </div>
+        <label class="small">vel <input type="range" id="vel" min="0.1" max="1" step="0.05" value="0.8"></label>
+        <div class="seg" id="barsSeg">
+          <button data-bars="1" class="on">1 bar</button><button data-bars="2">2</button><button data-bars="4">4</button><button data-bars="8">8</button>
+        </div>
+        <button id="rollUp" class="ghost">▲ oct</button><button id="rollDown" class="ghost">▼ oct</button>
+        <button id="clearPat" class="ghost">clear</button>
+        <button id="patchToggle">patch…</button>
+      </div>
+      <div id="rollWrap"><canvas id="roll"></canvas></div>
+      <div id="patchPanel" class="hidden">
+        <div class="row">
+          <label>preset <select id="preset"></select></label>
+          <button id="copyPatch" class="ghost">copy</button><button id="pastePatch" class="ghost">paste</button>
+        </div>
+        <div id="params" class="params"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="octs"><button id="octDown">oct −</button><button id="octUp">oct +</button></div>
+    <div id="keys" class="keys"></div>
+    <div class="masterbox"><label class="small">master</label><input type="range" id="master" min="0" max="1.5" step="0.01" value="0.8"><button id="panic" class="ghost">panic</button></div>
+  </footer>
+
+  <script type="module" src="studio.js"></script>
+</body>
+</html>
