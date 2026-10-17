@@ -34,9 +34,11 @@ async function loadWasm() {
   const ex = inst.exports;
   if (ex._initialize) ex._initialize();
   const mem = new Uint8Array(ex.memory.buffer);
+  state.paramDefaults = [];
   for (let i = 0; i < ex.ab_param_count(); i++) {
     const p = ex.ab_param_name(i); let e = p; while (mem[e]) e++;
     state.paramIds[new TextDecoder().decode(mem.subarray(p, e))] = i;
+    state.paramDefaults.push([i, ex.ab_param_default(i)]);
   }
 }
 
@@ -105,9 +107,8 @@ function applyPatch(name) {
   if (!state.node) return;
   stopPhrase();
   send({ type: 'panic' });
-  // reset everything to defaults first, then the patch
-  const defaults = [];
-  send({ type: 'params', list: paramList(p) });
+  // reset everything to defaults first, then the patch (a patch only lists what it changes)
+  send({ type: 'params', list: state.paramDefaults.concat(paramList(p)) });
   if (state.matchEnabled) measureLoudness(); else setTrim(0);
 }
 
